@@ -1,0 +1,117 @@
+-- Create Database
+CREATE DATABASE IF NOT EXISTS ecommerce;
+USE ecommerce;
+
+-- Users Table
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  firstName VARCHAR(100),
+  lastName VARCHAR(100),
+  address VARCHAR(500),
+  city VARCHAR(100),
+  zipCode VARCHAR(20),
+  country VARCHAR(100),
+  phone VARCHAR(20),
+  isAdmin BOOLEAN DEFAULT FALSE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Categories Table
+CREATE TABLE IF NOT EXISTS categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  description TEXT,
+  image VARCHAR(500),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Products Table
+CREATE TABLE IF NOT EXISTS products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  price DECIMAL(10, 2) NOT NULL,
+  image VARCHAR(500),
+  stock INT DEFAULT 0,
+  categoryId INT NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+-- Reviews Table
+CREATE TABLE IF NOT EXISTS reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  productId INT NOT NULL,
+  userId INT NOT NULL,
+  rating INT CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Cart Table
+CREATE TABLE IF NOT EXISTS carts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL UNIQUE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- CartItems Table
+CREATE TABLE IF NOT EXISTS cartItems (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cartId INT NOT NULL,
+  productId INT NOT NULL,
+  quantity INT DEFAULT 1,
+  price DECIMAL(10, 2),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (cartId) REFERENCES carts(id) ON DELETE CASCADE,
+  FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- Orders Table
+CREATE TABLE IF NOT EXISTS orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  totalPrice DECIMAL(10, 2),
+  status VARCHAR(50) DEFAULT 'pending',
+  shippingAddress VARCHAR(500),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- OrderItems Table
+CREATE TABLE IF NOT EXISTS orderItems (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  orderId INT NOT NULL,
+  productId INT NOT NULL,
+  quantity INT,
+  price DECIMAL(10, 2),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- Create indexes for better performance
+-- Note: Safe to run multiple times due to error handling above
+CREATE INDEX idx_products_categoryId ON products(categoryId);
+CREATE INDEX idx_reviews_productId ON reviews(productId);
+CREATE INDEX idx_reviews_userId ON reviews(userId);
+CREATE INDEX idx_cartItems_cartId ON cartItems(cartId);
+CREATE INDEX idx_cartItems_productId ON cartItems(productId);
+CREATE INDEX idx_orders_userId ON orders(userId);
+CREATE INDEX idx_orderItems_orderId ON orderItems(orderId);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_categories_name ON categories(name);
